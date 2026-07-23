@@ -12,6 +12,7 @@
     <div class="nav-links">
       {% if current_user.is_authenticated %}
         <span class="nav-user">{{ current_user.username }}</span>
+        <a href="{{ url_for('user.me') }}">마이페이지</a>
         <a href="{{ url_for('auth.change_password') }}">비밀번호 변경</a>
         <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

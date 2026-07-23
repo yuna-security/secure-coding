@@ -52,9 +52,11 @@ def create_app(config_name=None):
     # 블루프린트
     from .main.routes import main_bp
     from .auth.routes import auth_bp
+    from .user.routes import user_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
 
     # CLI
     from .cli import register_cli

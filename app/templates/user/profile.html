@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.username }} 프로필{% endblock %}
+{% block content %}
+<h2>{{ profile.username }}</h2>
+<p class="muted">가입일: {{ profile.created_at.strftime('%Y-%m-%d') }}</p>
+<p class="muted">등록 상품 수: {{ profile.active_products }}</p>
+
+<h3>소개글</h3>
+{% if profile.bio %}
+  <p>{{ profile.bio }}</p>
+{% else %}
+  <p class="muted">등록된 소개글이 없습니다.</p>
+{% endif %}
+
+{% if is_me %}
+  <p class="muted"><a href="{{ url_for('user.me') }}">프로필 편집</a></p>
+{% endif %}
+{% endblock %}

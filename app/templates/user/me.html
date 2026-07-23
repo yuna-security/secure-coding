@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}마이페이지{% endblock %}
+{% block content %}
+<h2>마이페이지</h2>
+<p>사용자명: <strong>{{ user.username }}</strong></p>
+<p class="muted">가입일: {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+
+<form method="post" novalidate>
+  {{ form.csrf_token }}
+  <label>{{ form.bio.label }}
+    {{ form.bio(rows=5, maxlength=config.BIO_MAX, placeholder="자기소개를 입력하세요") }}
+  </label>
+  {% for e in form.bio.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <p class="muted">최대 {{ config.BIO_MAX }}자.</p>
+  {{ form.submit() }}
+</form>
+
+<p class="muted"><a href="{{ url_for('user.profile', user_id=user.id) }}">공개 프로필 미리보기</a>
+ · <a href="{{ url_for('auth.change_password') }}">비밀번호 변경</a></p>
+{% endblock %}
