@@ -1,15 +1,36 @@
-# secure-coding
+# Secure Coding
 
-## 설명
+## Tiny Secondhand Shopping Platform
 
-Python Hello World 예제입니다.
+You should add some functions and complete the security requirements.
 
-## 실행 방법
+## Requirements
 
-Ubuntu/WSL 터미널에서 아래 명령어를 실행합니다.
+If you do not have Miniconda (or Anaconda), install it from:
+https://docs.anaconda.com/free/miniconda/index.html
 
-    python3 helloworld.py
+```bash
+git clone https://github.com/yuna-security/secure-coding.git
+cd secure-coding
+conda env create -f enviroments.yaml
+```
 
-## 실행 결과
+## Usage
 
-    Hello, World!
+Run the server process:
+
+```bash
+python app.py
+```
+
+For temporary external testing, ngrok can forward port 5000:
+
+```bash
+# optional
+sudo snap install ngrok
+ngrok http 5000
+```
+
+> This README currently reflects the mentor starter baseline. It will be
+> expanded with the final secure setup, configuration, migration, test, and
+> execution instructions as implementation progresses.
