@@ -10,7 +10,9 @@
   <nav class="nav">
     <a class="brand" href="{{ url_for('main.index') }}">Tiny Market</a>
     <div class="nav-links">
+      <a href="{{ url_for('product.list_') }}">상품</a>
       {% if current_user.is_authenticated %}
+        <a href="{{ url_for('product.mine') }}">내 상품</a>
         <span class="nav-user">{{ current_user.username }}</span>
         <a href="{{ url_for('user.me') }}">마이페이지</a>
         <a href="{{ url_for('auth.change_password') }}">비밀번호 변경</a>

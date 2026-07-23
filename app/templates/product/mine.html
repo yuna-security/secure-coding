@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}내 상품{% endblock %}
+{% block content %}
+<h2>내 상품</h2>
+<p><a href="{{ url_for('product.new') }}">+ 새 상품 등록</a></p>
+{% if products %}
+  <ul class="product-list">
+    {% for product in products %}
+      <li class="product-card">
+        {% if product.image_filename %}
+          <img class="thumb" src="{{ url_for('product.uploaded_file', filename=product.image_filename) }}" alt="상품 이미지">
+        {% endif %}
+        <a href="{{ url_for('product.detail', product_id=product.id) }}">{{ product.title }}</a>
+        <span class="price">{{ '{:,}'.format(product.price) }}원</span>
+        <span class="status status-{{ product.status }}">{{ product.status }}</span>
+        <span class="row-actions">
+          <a href="{{ url_for('product.edit', product_id=product.id) }}">수정</a>
+          <form class="inline-form" method="post" action="{{ url_for('product.delete', product_id=product.id) }}">
+            {{ delete_form.csrf_token }}
+            <button type="submit">삭제</button>
+          </form>
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">등록한 상품이 없습니다.</p>
+{% endif %}
+{% endblock %}

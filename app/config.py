@@ -55,6 +55,29 @@ class BaseConfig:
     CHAT_MESSAGE_MAX = 500
     REPORT_BLOCK_THRESHOLD = 3      # 신고 임계치
 
+    # 상품 (R2) / 검색 (R6)
+    PRODUCT_TITLE_MAX = 120         # 모델 String(120)과 일치
+    PRODUCT_DESC_MAX = 4000         # 모델 String(4000)과 일치
+    PRICE_MIN = 1                   # ⑧ 가격 범위
+    PRICE_MAX = 1_000_000_000
+    PRODUCTS_PER_PAGE = 20          # AC2.5 페이지네이션
+    SEARCH_QUERY_MAX = 100
+    # 정렬 허용목록(SQLi 방지 — 동적 정렬값 화이트리스트) (㉒, AC6.2)
+    PRODUCT_SORT_OPTIONS = ("newest", "price_asc", "price_desc")
+
+    # 이미지 업로드 (V-18, AC2.3)
+    UPLOAD_FOLDER = None            # 팩토리에서 instance_path/uploads로 확정
+    ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+    ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}  # Pillow 판정 포맷
+    IMAGE_EXT_BY_FORMAT = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
+    IMAGE_MIME_BY_FORMAT = {
+        "JPEG": {"image/jpeg"},
+        "PNG": {"image/png"},
+        "WEBP": {"image/webp"},
+    }
+    MAX_IMAGE_DIMENSION = 4096      # 픽셀(가로/세로 상한, 압축폭탄 방지)
+    MAX_IMAGE_PIXELS = 4096 * 4096  # 전체 디코딩 픽셀 상한
+
 
 class DevConfig(BaseConfig):
     # 디버거 콘솔 노출(V-04)을 막기 위해 개발 기본값도 False로 유지한다.

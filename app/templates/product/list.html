@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{% if search %}상품 검색{% else %}상품 목록{% endif %}{% endblock %}
+{% block content %}
+<h2>{% if search %}상품 검색{% else %}상품 목록{% endif %}</h2>
+
+<form class="search-form" method="get"
+      action="{{ url_for('product.search') if search else url_for('product.list_') }}">
+  <input type="text" name="q" value="{{ q or '' }}" maxlength="100" placeholder="상품명·설명 검색">
+  <select name="sort">
+    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>최신순</option>
+    <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>가격 낮은순</option>
+    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>가격 높은순</option>
+  </select>
+  <button type="submit">검색</button>
+</form>
+
+{% if current_user.is_authenticated %}
+  <p><a href="{{ url_for('product.new') }}">+ 새 상품 등록</a></p>
+{% endif %}
+
+{% if pagination.items %}
+  <ul class="product-list">
+    {% for product in pagination.items %}
+      <li class="product-card">
+        {% if product.image_filename %}
+          <img class="thumb" src="{{ url_for('product.uploaded_file', filename=product.image_filename) }}" alt="상품 이미지">
+        {% endif %}
+        <a href="{{ url_for('product.detail', product_id=product.id) }}">{{ product.title }}</a>
+        <span class="price">{{ '{:,}'.format(product.price) }}원</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <nav class="pagination">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for(request.endpoint, page=pagination.prev_num, q=q, sort=sort) }}">이전</a>
+    {% endif %}
+    <span>{{ pagination.page }} / {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+      <a href="{{ url_for(request.endpoint, page=pagination.next_num, q=q, sort=sort) }}">다음</a>
+    {% endif %}
+  </nav>
+{% else %}
+  <p class="muted">{% if q %}검색 결과가 없습니다.{% else %}등록된 상품이 없습니다.{% endif %}</p>
+{% endif %}
+{% endblock %}

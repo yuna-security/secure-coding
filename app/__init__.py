@@ -46,6 +46,20 @@ def create_app(config_name=None):
         # 휴면 전환된 기존 세션도 다음 요청부터 즉시 무효화한다.
         return user if user is not None and user.is_active else None
 
+    # 업로드 폴더 확정(instance 하위, 실행 불가·정적 서빙 대상 아님) + 생성
+    upload_folder = app.config.get("UPLOAD_FOLDER") or os.path.join(
+        app.instance_path, "uploads"
+    )
+    app.config["UPLOAD_FOLDER"] = os.path.abspath(upload_folder)
+    # 테스트는 fixture가 격리된 임시 폴더를 주입하므로 기본 경로를 만들지 않는다.
+    if not app.testing:
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+        if os.name != "nt":
+            try:
+                os.chmod(app.config["UPLOAD_FOLDER"], 0o700)
+            except OSError:
+                pass  # POSIX 권한 변경을 지원하지 않는 파일시스템
+
     # 보안 헤더 + 오류 처리
     register_security(app)
 
@@ -53,10 +67,12 @@ def create_app(config_name=None):
     from .main.routes import main_bp
     from .auth.routes import auth_bp
     from .user.routes import user_bp
+    from .product.routes import product_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
+    app.register_blueprint(product_bp)
 
     # CLI
     from .cli import register_cli

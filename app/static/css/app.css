@@ -25,4 +25,21 @@ button:hover, input[type="submit"]:hover { background: #1d4ed8; }
 .flash-list { list-style: none; padding: 0; }
 .flash { background: #fef3c7; border: 1px solid #fcd34d; padding: 10px 12px;
   border-radius: 6px; margin-bottom: 10px; }
+/* 상품 (P4) */
+.search-form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.search-form input[type="text"] { flex: 1 1 200px; width: auto; margin: 0; }
+.search-form select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+.search-form button { margin: 0; }
+.product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.product-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex;
+  flex-direction: column; gap: 6px; }
+.product-card .thumb, .thumb { width: 100%; max-width: 120px; height: auto; border-radius: 6px; object-fit: cover; }
+.price { font-weight: 700; color: var(--accent); }
+.detail-image { max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 12px; }
+.desc { white-space: pre-wrap; }
+.owner-actions, .row-actions { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+.status { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eef; color: #334; width: fit-content; }
+.status-blocked { background: #fee2e2; color: #991b1b; }
+.status-deleted { background: #e5e7eb; color: #6b7280; }
+.pagination { display: flex; gap: 14px; align-items: center; margin-top: 18px; }
 @media (max-width: 480px) { .container { margin: 16px; padding: 18px; } }

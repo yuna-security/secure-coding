@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }}{% endblock %}
+{% block content %}
+<h2>{{ product.title }}</h2>
+{% if product.image_filename %}
+  <img class="detail-image" src="{{ url_for('product.uploaded_file', filename=product.image_filename) }}" alt="상품 이미지">
+{% endif %}
+<p class="price">{{ '{:,}'.format(product.price) }}원</p>
+<p class="muted">판매자:
+  <a href="{{ url_for('user.profile', user_id=product.seller_id) }}">{{ seller.username if seller else '알 수 없음' }}</a>
+</p>
+<h3>설명</h3>
+<p class="desc">{{ product.description }}</p>
+
+{% if is_owner %}
+  <div class="owner-actions">
+    <a href="{{ url_for('product.edit', product_id=product.id) }}">수정</a>
+    <form class="inline-form" method="post" action="{{ url_for('product.delete', product_id=product.id) }}">
+      {{ delete_form.csrf_token }}
+      <button type="submit">삭제</button>
+    </form>
+  </div>
+{% endif %}
+<p class="muted"><a href="{{ url_for('product.list_') }}">← 목록으로</a></p>
+{% endblock %}

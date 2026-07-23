@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}상품 수정{% endblock %}
+{% block content %}
+<h2>상품 수정</h2>
+<form method="post" enctype="multipart/form-data" novalidate>
+  {{ form.csrf_token }}
+  <label>{{ form.title.label }} {{ form.title(maxlength=config.PRODUCT_TITLE_MAX) }}</label>
+  {% for e in form.title.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <label>{{ form.price.label }} {{ form.price() }}</label>
+  {% for e in form.price.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <label>{{ form.description.label }} {{ form.description(rows=5, maxlength=config.PRODUCT_DESC_MAX) }}</label>
+  {% for e in form.description.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  {% if product.image_filename %}
+    <p class="muted">현재 이미지:
+      <img class="thumb" src="{{ url_for('product.uploaded_file', filename=product.image_filename) }}" alt="현재 이미지"></p>
+  {% endif %}
+  <label>{{ form.image.label }} {{ form.image(accept="image/png,image/jpeg,image/webp") }}</label>
+  {% for e in form.image.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <p class="muted">새 이미지를 올리면 기존 이미지를 대체합니다.</p>
+  {{ form.submit() }}
+</form>
+<p class="muted"><a href="{{ url_for('product.mine') }}">← 내 상품</a></p>
+{% endblock %}

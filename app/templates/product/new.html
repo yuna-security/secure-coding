@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}새 상품 등록{% endblock %}
+{% block content %}
+<h2>새 상품 등록</h2>
+<form method="post" enctype="multipart/form-data" novalidate>
+  {{ form.csrf_token }}
+  <label>{{ form.title.label }} {{ form.title(maxlength=config.PRODUCT_TITLE_MAX) }}</label>
+  {% for e in form.title.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <label>{{ form.price.label }} {{ form.price() }}</label>
+  {% for e in form.price.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <label>{{ form.description.label }} {{ form.description(rows=5, maxlength=config.PRODUCT_DESC_MAX) }}</label>
+  {% for e in form.description.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <label>{{ form.image.label }} {{ form.image(accept="image/png,image/jpeg,image/webp") }}</label>
+  {% for e in form.image.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <p class="muted">이미지는 선택 사항입니다. 최대 5MB, jpg/png/webp.</p>
+  {{ form.submit() }}
+</form>
+{% endblock %}

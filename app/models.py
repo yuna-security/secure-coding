@@ -66,7 +66,7 @@ class Product(db.Model):
     title = db.Column(db.String(120), nullable=False, index=True)  # 검색 인덱스
     description = db.Column(db.String(4000), nullable=False, default="")
     price = db.Column(db.Integer, nullable=False)                  # ⑧ 정수·범위
-    image_filename = db.Column(db.String(255), nullable=True)      # 난수 파일명
+    image_filename = db.Column(db.String(255), nullable=True)  # 난수 파일명
     seller_id = db.Column(db.String(36), db.ForeignKey("user.id"), nullable=False)
     status = db.Column(db.String(16), nullable=False, default="active")  # active|blocked|deleted
     created_at = db.Column(db.DateTime, nullable=False, default=_now)
@@ -74,7 +74,21 @@ class Product(db.Model):
     seller = db.relationship("User", backref="products")
 
     __table_args__ = (
-        db.CheckConstraint("price > 0", name="ck_product_price_pos"),
+        db.UniqueConstraint(
+            "image_filename", name="uq_product_image_filename"
+        ),
+        db.CheckConstraint(
+            "length(trim(title)) between 1 and 120",
+            name="ck_product_title_length",
+        ),
+        db.CheckConstraint(
+            "length(description) <= 4000",
+            name="ck_product_description_length",
+        ),
+        db.CheckConstraint(
+            "price between 1 and 1000000000",
+            name="ck_product_price_range",
+        ),
         db.CheckConstraint(
             "status in ('active','blocked','deleted')", name="ck_product_status"
         ),
