@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}회원가입{% endblock %}
+{% block content %}
+<h2>회원가입</h2>
+<form method="post" novalidate>
+  {{ form.csrf_token }}
+  <label>{{ form.username.label }}
+    {{ form.username(maxlength=20, autocomplete="username") }}
+  </label>
+  {% for e in form.username.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <label>{{ form.password.label }}
+    {{ form.password(maxlength=128, autocomplete="new-password") }}
+  </label>
+  {% for e in form.password.errors %}<p class="err">{{ e }}</p>{% endfor %}
+  <p class="muted">사용자명 3~20자(영문/숫자/밑줄), 비밀번호 8자 이상.</p>
+  {{ form.submit() }}
+</form>
+{% endblock %}

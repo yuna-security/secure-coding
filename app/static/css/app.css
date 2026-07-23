@@ -1,0 +1,28 @@
+/* CSP를 엄격히 유지하기 위해 인라인 스타일 대신 외부 CSS 사용 (style-src 'self') */
+:root { --bg: #f7f7f8; --fg: #222; --muted: #6b7280; --accent: #2563eb; --border: #e5e7eb; --err: #b91c1c; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.nav { display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; background: #fff; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+.brand { font-weight: 700; color: var(--fg); text-decoration: none; }
+.nav-links { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.nav-links a { color: #444; text-decoration: none; }
+.nav-user { color: var(--muted); font-weight: 600; }
+.inline-form { display: inline; margin: 0; }
+.container { max-width: 720px; margin: 32px auto; background: #fff; padding: 28px;
+  border: 1px solid var(--border); border-radius: 10px; }
+h1, h2 { margin-top: 0; }
+label { display: block; margin: 14px 0 6px; font-weight: 600; }
+input[type="text"], input[type="password"] { width: 100%; padding: 10px;
+  border: 1px solid var(--border); border-radius: 6px; font-size: 15px; }
+button, input[type="submit"] { margin-top: 16px; padding: 10px 16px; border: none;
+  background: var(--accent); color: #fff; border-radius: 6px; font-size: 15px; cursor: pointer; }
+button:hover, input[type="submit"]:hover { background: #1d4ed8; }
+.nav .inline-form button { margin: 0; padding: 6px 12px; background: #ef4444; }
+.muted { color: var(--muted); font-size: 14px; }
+.err { color: var(--err); font-size: 13px; margin: 4px 0; }
+.flash-list { list-style: none; padding: 0; }
+.flash { background: #fef3c7; border: 1px solid #fcd34d; padding: 10px 12px;
+  border-radius: 6px; margin-bottom: 10px; }
+@media (max-width: 480px) { .container { margin: 16px; padding: 18px; } }

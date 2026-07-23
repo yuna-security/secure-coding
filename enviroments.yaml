@@ -2,9 +2,8 @@ name: secure_coding
 channels:
   - defaults
 dependencies:
-  - python=3.9
+  - python=3.11
   - pip
   - pip:
-    - flask 
-    - flask-socketio
-    - flask-sqlalchemy
+    # 정확한 버전은 requirements.txt로 단일 관리 (㉗ 의존성 관리)
+    - -r requirements.txt
