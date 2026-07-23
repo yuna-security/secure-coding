@@ -72,18 +72,20 @@ Output:
 
 - `user`: id, username(unique), password_hash, bio, role(user/admin), status(active/dormant), balance, created_at, failed_login_count, locked_until
 - `product`: id, title, description, price(INTEGER, 원 단위), image_filename, seller_id(FK), status(active/blocked/deleted), created_at
-- `report`: id, reporter_id(FK user), **reported_user_id(FK user, nullable), reported_product_id(FK product, nullable)**, reason, status(pending/reviewed/actioned), created_at
+- `report`: id, reporter_id(FK user), **reported_user_id(FK user, nullable), reported_product_id(FK product, nullable)**, reason, status(pending/auto_actioned/reviewed/resolved), resolution(nullable: upheld/reversed/dismissed), reviewed_by(FK user, nullable), reviewed_at(nullable), created_at
   - **다형성 `target_type/target_id` 대신 실제 FK 2개**로 대상 존재를 DB가 보장. `CHECK`로 둘 중 **정확히 하나만** non-null.
   - `UNIQUE(reporter_id, reported_user_id)` / `UNIQUE(reporter_id, reported_product_id)`로 대상별 사용자당 1회 신고.
 - `chat_message`: id, room(global 또는 정규화된 dm 키), sender_id(FK), content, created_at — 발신자는 서버 세션에서 결정(클라이언트 값 신뢰 금지)
-- `transfer` (예약어 회피를 위해 `transaction` 대신 사용): id, sender_id(FK), receiver_id(FK), amount(INTEGER > 0), memo, **idempotency_key(UNIQUE)**, created_at — **불변 원장**. 잔액은 이 원장에서 파생되며 관리자도 직접 수정 불가.
-- `audit_log`: id, actor_id, action, target, detail, created_at — 관리자/차단/휴면/거래상태변경 등 민감 조치 기록
+- `transfer` (예약어 회피를 위해 `transaction` 대신 사용): id, kind(transfer/grant), sender_id(FK, grant이면 NULL), receiver_id(FK), amount(INTEGER > 0), memo, idempotency_key, created_at — **불변 원장**. 일반 송금의 멱등 범위는 `(sender_id, idempotency_key)`이며, `user.balance`는 원장과 대조 가능한 materialized balance로만 유지한다.
+- `audit_log`: id, actor_type(system/user/admin), actor_id(FK, system이면 NULL), action, target, detail, created_at — 관리자/자동 차단·휴면/시스템 지급 등 민감 조치 기록
 
 **송금 동시성(SQLite 경쟁조건 방지)** — "단일 트랜잭션"만으로는 부족하므로:
 1. 원자적 조건부 차감: `UPDATE user SET balance = balance - :amt WHERE id = :sender AND balance >= :amt`
 2. **영향 행 수가 1일 때만** 입금(`balance = balance + :amt`)과 `transfer` 원장 기록을 같은 트랜잭션에서 수행. 0이면 잔액부족으로 롤백.
-3. `idempotency_key` UNIQUE 위반 시 동일 요청 재전송으로 간주하고 중복 처리 안 함.
+3. `(sender_id, idempotency_key)` 충돌 시 저장된 수신자·금액을 비교한다. 같으면 기존 성공 결과를 재응답하고, 다르면 `409 Conflict`로 거부한다.
 4. 자기송금 금지, 양의 정수 금액 검증. **동일 요청 재전송·병렬 송금 테스트**를 P7에 포함.
+
+> 상세 CHECK/UNIQUE, grant 지급, 신고 검토·복구 상태, 감사 actor 규칙은 `SYSTEM_DESIGN.ko.md` §5~6을 단일 구현 기준으로 삼는다.
 
 슬라이드 28쪽의 최소 3테이블(사용자·상품·신고)을 포함하며 확장. 모든 테이블에 외래키·CHECK 제약·인덱스(검색용 `product.title` 인덱스) 명시.
 
@@ -156,7 +158,7 @@ Output:
 
 ## 6. 테스트 전략 (슬라이드 30~32쪽)
 
-1. **체크리스트**: 멘토 예시(31쪽) 22항목 + 확장 항목으로 CSV 작성 → 항목별 확인 방법·결과 기록
+1. **체크리스트**: 공식 체크리스트 27항목(`secure_coding_checklist.csv`) + 확장 항목으로 CSV 작성 → 항목별 확인 방법·결과 기록 (항목별 구현위치·검증·테스트 매핑은 `SYSTEM_DESIGN.ko.md` §11 부록)
 2. **테스트 케이스**: pytest로 백엔드 기능별 정상/비정상 입력 케이스, 보안 케이스(XSS 페이로드, CSRF 토큰 누락, 타인 상품 수정 시도, 음수 송금, 잔액 초과, 중복 신고 등)
 3. **실사용 테스트**: 서버 실행 후 두 개 이상 브라우저 + 핸드폰(ngrok)으로 회원가입→상품→채팅→신고→송금 전 과정, 스크린샷 증적 확보
 4. **유지보수**: 발견 버그·불편 사항을 이슈 로그로 기록, 수정 커밋과 연결 (보고서의 유지보수 장에 사용)
