@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}지갑{% endblock %}
+{% block content %}
+<h2>지갑</h2>
+<p class="balance-line">잔액 <span class="price">{{ '{:,}'.format(balance) }}</span> 포인트</p>
+
+<section class="transfer-box">
+  <h3>송금</h3>
+  {# 플랫폼 포인트(실화폐 아님). 양의 정수·잔액 이내·자기송금 금지·멱등(SR-03). #}
+  <form method="post" action="{{ url_for('wallet.transfer') }}" autocomplete="off">
+    {{ form.csrf_token }}
+    {{ form.idempotency_key }}
+    <label>{{ form.recipient.label }}
+      {{ form.recipient(placeholder="받는 사람 사용자명") }}
+    </label>
+    <label>{{ form.amount.label }}
+      {{ form.amount(placeholder="보낼 포인트", inputmode="numeric") }}
+    </label>
+    <label>{{ form.memo.label }}
+      {{ form.memo(maxlength=config.TRANSFER_MEMO_MAX, placeholder="메모(선택)") }}
+    </label>
+    {{ form.submit() }}
+  </form>
+</section>
+
+<section>
+  <h3>거래 내역</h3>
+  <div class="table-scroll">
+    <table class="admin-table">
+      <thead>
+        <tr><th>일시</th><th>구분</th><th>상대</th><th>금액</th><th>메모</th></tr>
+      </thead>
+      <tbody>
+        {% for t in pagination.items %}
+          {% set incoming = (t.receiver_id == me_id) %}
+          <tr>
+            <td class="muted">{{ t.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+              {% if t.kind == 'grant' %}지급받음
+              {% elif incoming %}받음{% else %}보냄{% endif %}
+            </td>
+            <td>
+              {% if t.kind == 'grant' %}<span class="muted">시스템 지급</span>
+              {% elif incoming %}{{ t.sender.username if t.sender else '알 수 없음' }}
+              {% else %}{{ t.receiver.username if t.receiver else '알 수 없음' }}{% endif %}
+            </td>
+            <td class="price">{{ '+' if (incoming or t.kind == 'grant') else '-' }}{{ '{:,}'.format(t.amount) }}</td>
+            <td class="muted">{{ t.memo or '—' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="muted">거래 내역이 없습니다.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "admin/_pager.html" %}
+</section>
+{% endblock %}

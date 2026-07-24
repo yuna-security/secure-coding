@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone
 
 from flask_login import UserMixin
+from sqlalchemy import DDL, event
 
 from .extensions import db
 
@@ -46,7 +47,10 @@ class User(UserMixin, db.Model):
     __table_args__ = (
         db.CheckConstraint("role in ('user','admin')", name="ck_user_role"),
         db.CheckConstraint("status in ('active','dormant')", name="ck_user_status"),
-        db.CheckConstraint("balance >= 0", name="ck_user_balance_nonneg"),
+        db.CheckConstraint(
+            "balance between 0 and 1000000000000",
+            name="ck_user_balance_range",
+        ),
     )
 
     @property
@@ -227,11 +231,16 @@ class Transfer(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=_now)
 
     __table_args__ = (
-        db.CheckConstraint("amount > 0", name="ck_transfer_amount_pos"),
+        db.CheckConstraint(
+            "amount between 1 and 1000000000",
+            name="ck_transfer_amount_range",
+        ),
+        db.CheckConstraint("length(memo) <= 200", name="ck_transfer_memo_length"),
         db.CheckConstraint(
             "(kind = 'transfer' AND sender_id IS NOT NULL "
             "AND sender_id <> receiver_id AND idempotency_key IS NOT NULL) "
-            "OR (kind = 'grant' AND sender_id IS NULL)",
+            "OR (kind = 'grant' AND sender_id IS NULL "
+            "AND idempotency_key IS NOT NULL)",
             name="ck_transfer_kind",
         ),
         db.CheckConstraint(
@@ -243,11 +252,38 @@ class Transfer(db.Model):
         db.UniqueConstraint(
             "sender_id", "idempotency_key", name="uq_transfer_idempotency"
         ),
+        db.Index(
+            "uq_transfer_grant_idempotency",
+            "idempotency_key",
+            unique=True,
+            sqlite_where=db.text("kind = 'grant'"),
+            postgresql_where=db.text("kind = 'grant'"),
+        ),
     )
 
     # 관리자 거래 로그 표시용 읽기 전용 관계(스키마 변경 없음).
     sender = db.relationship("User", foreign_keys=[sender_id], viewonly=True)
     receiver = db.relationship("User", foreign_keys=[receiver_id], viewonly=True)
+
+
+event.listen(
+    Transfer.__table__,
+    "after_create",
+    DDL(
+        "CREATE TRIGGER IF NOT EXISTS transfer_no_update "
+        "BEFORE UPDATE ON transfer BEGIN "
+        "SELECT RAISE(ABORT, 'transfer ledger is append-only'); END"
+    ).execute_if(dialect="sqlite"),
+)
+event.listen(
+    Transfer.__table__,
+    "after_create",
+    DDL(
+        "CREATE TRIGGER IF NOT EXISTS transfer_no_delete "
+        "BEFORE DELETE ON transfer BEGIN "
+        "SELECT RAISE(ABORT, 'transfer ledger is append-only'); END"
+    ).execute_if(dialect="sqlite"),
+)
 
 
 class AuditLog(db.Model):

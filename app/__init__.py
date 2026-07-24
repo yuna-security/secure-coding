@@ -70,6 +70,7 @@ def create_app(config_name=None):
     from .product.routes import product_bp
     from .admin.routes import admin_bp
     from .chat.routes import chat_bp
+    from .wallet.routes import wallet_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -77,6 +78,7 @@ def create_app(config_name=None):
     app.register_blueprint(product_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(wallet_bp)
 
     # Socket.IO 이벤트 핸들러 등록(전체/DM 채팅 — R3).
     from .chat.events import register_chat_events

@@ -7,7 +7,7 @@
 <div class="table-scroll">
   <table class="admin-table">
     <thead>
-      <tr><th>사용자명</th><th>역할</th><th>상태</th><th>가입일</th><th>조치</th></tr>
+      <tr><th>사용자명</th><th>역할</th><th>상태</th><th>가입일</th><th>조치</th><th>포인트 지급</th></tr>
     </thead>
     <tbody>
       {% for u in pagination.items %}
@@ -35,9 +35,25 @@
               <span class="muted">—</span>
             {% endif %}
           </td>
+          <td>
+            {# 잔액 직접 수정이 아니라 grant 원장으로만 지급(AC7.5/§5-5). #}
+            {% if u.role == 'user' and u.status == 'active' %}
+              <form class="inline-form grant-form" method="post"
+                    action="{{ url_for('admin.user_grant', user_id=u.id) }}" autocomplete="off">
+                {{ grant_form.csrf_token }}
+                <input type="hidden" name="idempotency_key"
+                       value="{{ grant_form.idempotency_key.data }}">
+                <input type="text" name="amount" inputmode="numeric" placeholder="포인트" required>
+                <input type="text" name="memo" maxlength="{{ config.TRANSFER_MEMO_MAX }}" placeholder="메모">
+                <button type="submit">지급</button>
+              </form>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
         </tr>
       {% else %}
-        <tr><td colspan="5" class="muted">사용자가 없습니다.</td></tr>
+        <tr><td colspan="6" class="muted">사용자가 없습니다.</td></tr>
       {% endfor %}
     </tbody>
   </table>

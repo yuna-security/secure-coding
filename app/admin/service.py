@@ -15,6 +15,7 @@
 from functools import wraps
 
 from flask import current_app
+from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import NotFound, Conflict, Forbidden
 
 from ..extensions import db
@@ -22,6 +23,7 @@ from ..models import (
     User, Product, Report, AuditLog, Transfer, write_audit, utcnow_naive,
 )
 from ..auth.service import ValidationError
+from ..wallet import service as wallet_service
 
 RESOLUTIONS = ("upheld", "reversed", "dismissed")
 REPORT_STATUSES = ("pending", "auto_actioned", "reviewed", "resolved")
@@ -99,6 +101,71 @@ def restore_user(admin: User, user_id: str) -> None:
         raise Conflict()
     write_audit("admin", "admin_user_restore", actor_id=admin.id, target=user_id)
     db.session.commit()
+
+
+# ---------- 포인트 지급 (AC5.1 / grant 원장, P8에서 이월) ----------
+
+def _existing_grant(key):
+    return Transfer.query.filter_by(
+        kind="grant", idempotency_key=key
+    ).first()
+
+
+@_transactional
+def grant_points(admin: User, user_id: str, amount_raw, memo,
+                 idempotency_key) -> Transfer:
+    """관리자 포인트 지급 — balance 직접 수정이 아니라 grant 원장(sender 없음)으로 발생.
+
+    모든 잔액 변화가 추적 가능(SR-03/§5-5). 활성 사용자에게만, 조건부 입금 후 원장·감사.
+    """
+    amount = wallet_service.parse_amount(amount_raw)
+    memo = wallet_service.clean_memo(memo)
+    key = wallet_service.validate_idempotency_key(idempotency_key)
+    existing = _existing_grant(key)
+    if existing is not None:
+        if existing.receiver_id == user_id and existing.amount == amount:
+            return existing
+        raise Conflict()
+
+    receiver = db.session.get(User, user_id)
+    if receiver is None:
+        raise NotFound()
+    if receiver.status != "active" or receiver.role != "user":
+        raise ValidationError("활성 사용자에게만 지급할 수 있습니다.")
+    try:
+        credited = User.query.filter(
+            User.id == user_id,
+            User.status == "active",
+            User.role == "user",
+            User.balance <= current_app.config["BALANCE_MAX"] - amount,
+        ).update({"balance": User.balance + amount}, synchronize_session=False)
+        if credited != 1:
+            raise Conflict()
+        ledger = Transfer(
+            kind="grant",
+            sender_id=None,
+            receiver_id=user_id,
+            amount=amount,
+            memo=memo,
+            idempotency_key=key,
+        )
+        db.session.add(ledger)
+        write_audit(
+            "admin", "admin_grant", actor_id=admin.id,
+            target=user_id, detail=str(amount),
+        )
+        db.session.commit()
+        return ledger
+    except IntegrityError:
+        db.session.rollback()
+        existing = _existing_grant(key)
+        if (
+            existing is not None
+            and existing.receiver_id == user_id
+            and existing.amount == amount
+        ):
+            return existing
+        raise Conflict()
 
 
 # ---------- 상품 상태 (AC7.3) ----------

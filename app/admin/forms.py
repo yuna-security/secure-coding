@@ -1,6 +1,6 @@
 """관리자 폼 (Flask-WTF) — 모든 상태 변경 POST에 CSRF 토큰(②) 강제."""
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, SelectField
+from wtforms import SubmitField, SelectField, StringField, HiddenField
 from wtforms.validators import DataRequired
 
 from .service import RESOLUTIONS
@@ -9,6 +9,16 @@ from .service import RESOLUTIONS
 class AdminActionForm(FlaskForm):
     """추가 입력이 없는 상태 변경(휴면/복구/차단/삭제/검토)용 — CSRF 전용."""
     submit = SubmitField("실행")
+
+
+class GrantForm(FlaskForm):
+    """포인트 지급(grant 원장) — 금액·메모 + CSRF."""
+    amount = StringField("금액", validators=[DataRequired(message="금액을 입력하세요.")])
+    memo = StringField("메모")
+    idempotency_key = HiddenField(
+        "요청 식별자", validators=[DataRequired(message="요청 식별자가 필요합니다.")]
+    )
+    submit = SubmitField("지급")
 
 
 class ResolveReportForm(FlaskForm):

@@ -61,6 +61,18 @@ class BaseConfig:
     # 관리자(R7)
     ADMIN_PAGE_SIZE = 30            # 관리자 목록 페이지네이션(사용자/상품/신고/로그)
 
+    # 송금·지갑(R5) — 플랫폼 포인트(실화폐 아님). 원장 기반 무결성(SR-03)
+    TRANSFER_AMOUNT_MIN = 1                 # 양의 정수
+    TRANSFER_AMOUNT_MAX = 1_000_000_000     # 입력 상한(오버플로·오조작 방지)
+    BALANCE_MAX = 1_000_000_000_000          # 누적 잔액 상한(DB CHECK와 일치)
+    TRANSFER_MEMO_MAX = 200                 # 모델 String(200)과 일치
+    # 멱등 키 길이(모델 CHECK 16~64와 일치). 폼은 uuid hex(32) 기본 발급.
+    IDEMPOTENCY_KEY_MIN = 16
+    IDEMPOTENCY_KEY_MAX = 64
+    WALLET_PAGE_SIZE = 20                   # 거래 내역 페이지네이션(AC5.5)
+    TRANSFER_RATE_LIMIT = "60 per hour"     # IP 기반 송금 남용 완화
+    TRANSFER_USER_RATE_LIMIT = "30 per hour"  # 인증 사용자별 송금 제한
+
     # 채팅(R3) — Socket.IO 이벤트는 Flask-Limiter가 아닌 사용자 ID 기반 카운터로 제한(§3)
     # (메시지 길이 상한 CHAT_MESSAGE_MAX는 위 공통 상수에서 정의)
     CHAT_RATE_MAX_EVENTS = 5           # ⑯ 사용자별 5개 / 창(윈도우)

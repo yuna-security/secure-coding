@@ -5,6 +5,8 @@
 - 응답 계약: 성공→목록으로 redirect(302)+flash, 입력/규칙 위반→400,
   경합/불가 상태 전이→409(서비스가 raise), 미존재→404.
 """
+import uuid
+
 from flask import (
     Blueprint, render_template, redirect, url_for, flash, request, abort,
 )
@@ -12,7 +14,7 @@ from flask_login import current_user
 
 from . import admin_required
 from . import service as admin_service
-from .forms import AdminActionForm, ResolveReportForm
+from .forms import AdminActionForm, ResolveReportForm, GrantForm
 from ..auth.service import ValidationError
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -40,10 +42,13 @@ def dashboard():
 @admin_bp.route("/users")
 @admin_required
 def users():
+    grant_form = GrantForm()
+    grant_form.idempotency_key.data = uuid.uuid4().hex
     return render_template(
         "admin/users.html",
         pagination=admin_service.list_users(_page()),
         action_form=AdminActionForm(),
+        grant_form=grant_form,
     )
 
 
@@ -115,6 +120,23 @@ def user_restore(user_id):
     except ValidationError:
         abort(400)
     flash("사용자를 복구했습니다.")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/<user_id>/grant", methods=["POST"])
+@admin_required
+def user_grant(user_id):
+    form = GrantForm()
+    if not form.validate_on_submit():
+        abort(400)
+    try:
+        admin_service.grant_points(
+            _me(), user_id, form.amount.data, form.memo.data,
+            form.idempotency_key.data,
+        )
+    except ValidationError:
+        abort(400)
+    flash("포인트를 지급했습니다.")
     return redirect(url_for("admin.users"))
 
 
