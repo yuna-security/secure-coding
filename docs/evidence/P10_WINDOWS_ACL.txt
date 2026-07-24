@@ -1,0 +1,40 @@
+P10 Windows 파일 권한(ACL) 실증
+================================
+
+실행일: 2026-07-24 (KST)
+대상: instance/, instance/market.db, instance/uploads
+
+[적용 전]
+- BUILTIN\Users: 읽기·실행(RX)
+- NT AUTHORITY\Authenticated Users: 수정(M)
+- 상위 디렉터리의 ACL을 상속
+
+판정: 최소 권한 원칙 미충족
+
+[조치]
+- instance 및 하위 대상의 상속 ACL 제거
+- 아래 세 주체만 전체 권한 부여
+  - JARVIS\SAMSUNG (현재 앱 실행 사용자)
+  - NT AUTHORITY\SYSTEM
+  - BUILTIN\Administrators
+- instance/와 uploads/에는 OI/CI를 적용해 새 파일·하위 디렉터리에도 상속
+- market.db에는 동일 세 주체의 명시적 F 권한 적용
+
+[적용 후 icacls 핵심 출력]
+instance
+  BUILTIN\Administrators:(OI)(CI)(F)
+  NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+  JARVIS\SAMSUNG:(OI)(CI)(F)
+
+instance\market.db
+  BUILTIN\Administrators:(F)
+  NT AUTHORITY\SYSTEM:(F)
+  JARVIS\SAMSUNG:(F)
+
+instance\uploads
+  BUILTIN\Administrators:(OI)(CI)(F)
+  NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+  JARVIS\SAMSUNG:(OI)(CI)(F)
+
+판정: 일반 Users 및 Authenticated Users의 접근이 제거되어 현재 Windows
+실행 환경에서 SQLite DB와 업로드 데이터의 최소 권한 증적을 확보했다.

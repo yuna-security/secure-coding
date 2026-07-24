@@ -1,0 +1,33 @@
+P10 WSS 실제 연결·메시지 왕복 증적
+수집일: 2026-07-24 (Asia/Seoul)
+
+[구성]
+- 클라이언트: python-socketio, WebSocket 전송만 강제(transports=["websocket"])
+- 공개 측: https://127.0.0.1:5101 (임시 자체서명 TLS 인증서)
+- TLS 종료: 로컬 Node.js 역방향 프록시
+- 앱 측: http://127.0.0.1:5100
+- 앱 설정: APP_ENV=prod, TRUST_PROXY_HEADERS=1
+- 프록시 전달: X-Forwarded-Proto=https, X-Forwarded-Host, X-Forwarded-For
+- 인증: HTTPS에서 회원가입·로그인해 얻은 동일 세션 쿠키를 WSS 연결에 사용
+
+[실행 결과]
+WSS_CONNECT=True
+ENGINEIO_TRANSPORT=websocket
+AUTHENTICATED_SENDER=p10_wss_user
+MESSAGE_ROUND_TRIP=P10 WSS encrypted round trip
+WSS_RESULT=PASS
+
+[확인 사항]
+1. wss:// 출처에서 Socket.IO가 polling으로 폴백하지 않고 WebSocket으로 직접 연결됐다.
+2. HTTPS 로그인 세션이 WSS 연결에서도 인증됐다.
+3. 클라이언트가 보낸 메시지가 서버 저장·브로드캐스트 경로를 거쳐 같은 WSS 연결로 돌아왔다.
+4. 반환 username은 클라이언트 입력이 아니라 서버 세션에서 결정됐다.
+5. 동일 출처 프록시 헤더는 명시적으로 TRUST_PROXY_HEADERS=1일 때 한 홉만 신뢰했다.
+
+[보안 경계]
+자체서명 인증서는 로컬 검증 전용이다. 실제 배포에서는 신뢰 가능한 인증서를 사용하는
+ngrok/nginx 같은 TLS 종료 프록시를 사용하고 앱 포트는 loopback 또는 방화벽 내부에 둔다.
+TRUST_PROXY_HEADERS=1은 정확히 한 단계의 신뢰할 프록시가 앞에 있을 때만 활성화한다.
+
+[정리]
+임시 인증서·테스트 DB·프록시/클라이언트 스크립트는 증적 수집 후 삭제했다.

@@ -7,6 +7,7 @@ import os
 
 from flask import Flask
 from flask_login import current_user
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import CONFIG_MAP
 from .extensions import db, migrate, csrf, login_manager, limiter, socketio
@@ -27,6 +28,10 @@ def create_app(config_name=None):
     # 설정 모듈 import 이후 환경변수가 주입된 경우에도 최신 값을 사용한다.
     if config_name != "test" and os.environ.get("SECRET_KEY"):
         app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+    app.config["TRUST_PROXY_HEADERS"] = (
+        os.environ.get("TRUST_PROXY_HEADERS", "0").strip().lower()
+        in {"1", "true", "yes"}
+    )
     if hasattr(config_class, "validate"):
         config_class.validate(app.config)
 
@@ -39,6 +44,12 @@ def create_app(config_name=None):
     socketio.init_app(
         app, cors_allowed_origins=app.config.get("SOCKET_ALLOWED_ORIGINS")
     )
+    if app.config["TRUST_PROXY_HEADERS"]:
+        # 정확히 한 단계의 신뢰할 프록시(ngrok/nginx)만 전제로 한다.
+        # 외부 클라이언트가 앱 포트에 직접 접근할 수 있는 구성에서는 활성화하지 않는다.
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app, x_for=1, x_proto=1, x_host=1
+        )
 
     @login_manager.user_loader
     def load_user(user_id):

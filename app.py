@@ -17,7 +17,8 @@ from app.extensions import socketio  # noqa: E402
 application = create_app(os.environ.get("APP_ENV", "dev"))
 
 if __name__ == "__main__":
-    # 기본은 loopback으로만 연다. 핸드폰/ngrok 테스트 때만 HOST=0.0.0.0을 명시한다.
+    # 기본은 loopback으로만 연다. 같은 LAN에서 직접 접속할 때만 0.0.0.0을 사용한다.
+    # ngrok은 loopback에 연결할 수 있으므로 127.0.0.1을 유지한다.
     # 모든 환경에서 대화형 디버거는 비활성화한다(V-04).
     socketio.run(
         application,

@@ -2,9 +2,9 @@
 
 > 기준 문서: [`SYSTEM_DESIGN.ko.md`](SYSTEM_DESIGN.ko.md) §11 매핑표.
 > 방법: 각 항목을 **구현 위치 → 검증 방법 → 자동화 테스트/증적 → 결과**로 연결한다.
-> 자동화 테스트는 `pytest` **250 passed** 기준(2026-07-24). 기능별 상세 테스트(`test_p2~p8`)에
+> 자동화 테스트는 `pytest` **253 passed** 기준(2026-07-24). 기능별 상세 테스트(`test_p2~p10`)에
 > 더해, 교차 관심사·침투 관점을 `tests/test_p9_checklist.py`(30건)로 통합 재검증했다.
-> 범례: ✅ 자동화 테스트 통과 · 🟡 구현·설정 완료, 운영 증적은 P10(HTTPS/WSS·배포)에서 수집.
+> 범례: ✅ 자동화 테스트 또는 재현 가능한 운영 실증 통과.
 
 ---
 
@@ -13,9 +13,9 @@
 | 구분 | 항목 | 결과 |
 |------|------|------|
 | 자동화 테스트로 통과 | ①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑱⑲⑳㉑㉒㉔㉖㉗ (24) | ✅ |
-| 구현·설정 완료, 운영 증적 P10 이월 | ⑰(WSS) ㉕(HTTPS) ㉓(OS 파일 권한 — POSIX 배포) (3) | 🟡 |
+| 운영 증적 완료 | ⑰(WSS) ㉓(DB·업로드 권한) ㉕(HTTPS) (3) | ✅ |
 
-- 총 27개 항목 모두 구현·설계에 반영. 24개는 실행되는 테스트로 증명, 3개는 운영 배포(P10)에서 최종 증적 수집.
+- 총 27개 항목 모두 구현·설계·검증했다. 24개는 상시 자동화하고, ⑰·㉓·㉕는 P10에서 실제 운영 경계까지 실증했다.
 - 의존성(㉗)은 `requirements.txt` 전 항목 버전 고정을 테스트로 확인했다. `pip-audit 2.10.1`로 요구사항과 전이 의존성을 검사해 **"No known vulnerabilities found"**를 확인했다. 전체 가상환경 감사에서는 `pip 25.2`의 알려진 취약점 6건을 발견해 `pip 26.1.2`로 올렸고 재검사 결과도 취약점 0건이다. 원문 증적은 [`evidence/P9_DEPENDENCY_AUDIT.txt`](evidence/P9_DEPENDENCY_AUDIT.txt)에 남겼다.
 
 ---
@@ -40,15 +40,15 @@
 | ⑭ | 사용자 인증(Socket) | `chat/events.py` connect 세션 인증 | 미인증·휴면 연결 차단 | `tests/test_p5_chat.py::test_socket_rejects_unauthenticated`, `tests/test_p5_chat.py::test_socket_rejects_dormant_after_login` | ✅ |
 | ⑮ | 메시지 검증(서버측) | `chat/events.py` 발신자=세션, `_field` 방어 | 위조 필드 무시 | `tests/test_p5_chat.py::test_global_sender_is_server_session_not_client`, `tests/test_p5_chat.py::test_global_non_object_payload_rejected_without_server_error` | ✅ |
 | ⑯ | Rate Limiting | 채팅 사용자 ID 카운터(HTTP 로그인·신고·송금은 Flask-Limiter 보조 통제) | 메시지·방 참가 플러딩 제한 | `tests/test_p5_chat.py::test_global_rate_limited`, `tests/test_p5_chat.py::test_join_dm_is_rate_limited_per_user` | ✅ |
-| ⑰ | 연결 암호화(WSS) | 운영 HTTPS/WSS(ngrok/역방향 프록시) | wss:// 접속 확인 | 🟡 P10 배포 증적(설정 준비 완료: `SOCKET_ALLOWED_ORIGINS` 동일 출처) | 🟡 |
+| ⑰ | 연결 암호화(WSS) | 운영 HTTPS/WSS 역방향 프록시 + 동일 출처 제한 | WebSocket 전송 강제, 인증 세션 연결·메시지 왕복 | [`P10_WSS.txt`](evidence/P10_WSS.txt): `ENGINEIO_TRANSPORT=websocket`, `WSS_RESULT=PASS` | ✅ |
 | ⑱ | 신고 폼 입력 검증 | `report/service.py::validate_reason` + 대상 조회 | 미존재·비공개 대상 및 빈/과길이 사유 거부 | `tests/test_p6_report.py::test_report_hidden_or_unknown_product_404`, `tests/test_p6_report.py::test_report_reason_required_and_maxlength` | ✅ |
 | ⑲ | 인증된 사용자 접근(신고) | `report/routes` `@login_required` | 비로그인 신고 차단 | `tests/test_p6_report.py::test_report_requires_login` | ✅ |
 | ⑳ | 데이터 무결성·로그(신고) | `report/service` + `audit_log` + 검토 상태 | 접수·조치 감사 기록 | `tests/test_p6_report.py::test_report_product_success`, `tests/test_p8_admin.py::test_report_review_pending` | ✅ |
 | ㉑ | 신고 남용 방지 | UNIQUE + service(자기/중복/활성집계/임계치) | 자기·중복 신고 거부, 활성만 집계 | `tests/test_p6_report.py::test_self_report_product_rejected`, `tests/test_p6_report.py::test_duplicate_product_report_rejected`, `tests/test_p6_report.py::test_dormant_reporters_not_counted` | ✅ |
 | ㉒ | ORM·파라미터 바인딩 | 전 쿼리 ORM + 정렬 허용목록 | 정렬 주입을 기본 정렬로 강제, SQL 조건문 페이로드가 전체 조회를 만들지 않음 | `tests/test_p9_checklist.py::test_sort_field_injection_is_neutralized`, `tests/test_p9_checklist.py::test_search_sql_metacharacters_are_safe`, `tests/test_p4_product.py::test_search_escapes_sql_wildcards_and_rejects_overlong_query` | ✅ |
-| ㉓ | DB 최소 권한 | `security.py` SQLite DB `0600` + app factory instance/uploads `0700` + 업로드 파일 `0600` | POSIX chmod 호출 자동화 검증·배포 권한 확인 | `tests/test_p9_checklist.py::test_posix_private_modes_are_applied_to_sqlite_and_instance`; 실제 POSIX/Windows ACL 증적은 P10 | 🟡 |
+| ㉓ | DB 최소 권한 | POSIX DB·파일 `0600`, 디렉터리 `0700`; Windows 상속 ACL 제거 | chmod 자동화 + 실제 Windows ACL 전후 확인 | `tests/test_p9_checklist.py::test_posix_private_modes_are_applied_to_sqlite_and_instance`, [`P10_WINDOWS_ACL.txt`](evidence/P10_WINDOWS_ACL.txt) | ✅ |
 | ㉔ | 보안 헤더 | `security.py` after_request | CSP/XFO/XCTO/Referrer/Permissions 존재 | `tests/test_p9_checklist.py::test_security_headers_present`, `tests/test_p2_foundation.py::test_security_headers` | ✅ |
-| ㉕ | HTTPS 적용 | 운영 HTTPS(ngrok/프록시) + prod Secure·HSTS | https 접속·HSTS 확인 | 🟡 P10 배포 증적(prod `SESSION_COOKIE_SECURE=True`, HSTS 헤더 준비 완료) | 🟡 |
+| ㉕ | HTTPS 적용 | prod TLS + Secure 쿠키·HSTS | TLS 1.3 접속·인증 세션·보안 헤더 확인 | [`P10_HTTPS_TLS.txt`](evidence/P10_HTTPS_TLS.txt) | ✅ |
 | ㉖ | 에러·예외 처리 | 전역 핸들러(400/403/404/409/413/429/500) + 로그 마스킹 | 민감정보 없는 오류·로그 | `tests/test_p9_checklist.py::test_error_pages_leak_no_internals`, `tests/test_p2_foundation.py::test_internal_error_is_generic_and_debugger_is_disabled` | ✅ |
 | ㉗ | 의존성 관리 | `requirements.txt` 버전 고정 | 전 항목 == 고정 + 요구사항/전체 환경 pip-audit | `tests/test_p9_checklist.py::test_requirements_are_pinned` + [`P9_DEPENDENCY_AUDIT.txt`](evidence/P9_DEPENDENCY_AUDIT.txt) → 요구사항 0건, pip 6건 조치 후 전체 환경 0건 | ✅ |
 
@@ -67,16 +67,16 @@
 
 ---
 
-## 4. 운영 이월 항목(P10에서 증적 수집)
+## 4. P10 운영 증적
 
 | 항목 | 현재 상태(준비 완료) | P10 수집 증적 |
 |------|----------------------|----------------|
-| ⑰ WSS | Socket.IO 동일 출처 정책, 세션 인증 | ngrok/프록시 wss:// 접속 캡처 |
-| ㉕ HTTPS | prod `SESSION_COOKIE_SECURE=True`, HSTS 헤더 | https 접속·HSTS 응답 캡처 |
-| ㉓ DB·업로드 권한 | SQLite DB `0600`, instance/uploads `0700`, 업로드 파일 `0600` 적용 코드·단위 검증 완료 | POSIX `stat` 및 Windows ACL 캡처 |
+| ⑰ WSS | ✅ TLS 종료 프록시에서 실제 WebSocket·인증 메시지 왕복 완료 | [`P10_WSS.txt`](evidence/P10_WSS.txt) |
+| ㉕ HTTPS | ✅ TLS 1.3·HSTS·Secure 쿠키·인증 경로 캡처 완료 | [`P10_HTTPS_TLS.txt`](evidence/P10_HTTPS_TLS.txt) |
+| ㉓ DB·업로드 권한 | ✅ Windows ACL 실증, POSIX 적용 코드·단위검증 완료 | [`P10_WINDOWS_ACL.txt`](evidence/P10_WINDOWS_ACL.txt) |
 
 ---
 
 ## 5. 결론
 
-27개 항목 전부 구현·설계에 반영되었으며, 24개 항목은 자동화 테스트로 상시 회귀 검증된다(㉗은 버전 고정 테스트 + pip-audit 스캔 완료). 나머지 3개(⑰ WSS·㉕ HTTPS·㉓ OS 파일 권한)는 실제 배포(HTTPS/WSS, POSIX 파일시스템)가 필요한 운영 증적으로 P10에서 최종 수집한다. 본 문서는 최종 보고서(P11)의 체크리스트 근거로 그대로 사용한다.
+27개 항목 전부 구현·설계·검증되었고 24개 항목은 자동화 테스트로 상시 회귀 검증한다. ⑰ WSS, ㉓ 파일 권한, ㉕ HTTPS는 P10 운영 증적까지 완료했다. 본 문서는 최종 보고서(P11)의 체크리스트 근거로 사용한다.

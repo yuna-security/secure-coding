@@ -39,6 +39,8 @@ class BaseConfig:
     # Rate limit 저장소 (HTTP; Flask-Limiter)
     RATELIMIT_STORAGE_URI = "memory://"
     RATELIMIT_HEADERS_ENABLED = True
+    # 역방향 프록시 바로 뒤에서만 1로 설정. 직접 공개 시 헤더 위조 위험이 있다.
+    TRUST_PROXY_HEADERS = False
 
     # python-engineio에서 None이 요청 Host 기준 동일 출처 검증을 의미한다. (⑭)
     SOCKET_ALLOWED_ORIGINS = None

@@ -1,0 +1,20 @@
+== P10 HTTPS/TLS 실증 (자체서명, prod 설정) ==
+[환경] Windows 11 / Python 3.13.7 / APP_ENV=prod / 127.0.0.1:5099
+[인증서] OpenSSL로 생성한 1일 유효 자체서명 인증서(검증 후 인증서·키·DB 삭제)
+[클라이언트] requests Session(자체서명이라 인증서 검증만 해제), HTTPS Referer 포함
+
+[1] HTTPS GET /  status=200  (TLS 핸드셰이크 성공)
+    TLS version: TLSv1.3
+    Cipher: TLS_AES_256_GCM_SHA384
+    Strict-Transport-Security: max-age=31536000; includeSubDomains
+    Content-Security-Policy: present
+    X-Frame-Options: DENY  X-Content-Type-Options: nosniff
+[2] HTTPS 회원가입 POST status=302 (/login), 로그인 POST status=302 (/) — 성공
+    두 POST 모두 CSRF token + 동일 출처 HTTPS Referer 사용
+    세션 쿠키 Secure=True HttpOnly=True SameSite=Lax
+[3] HTTPS 인증 페이지 GET /wallet status=200 (200=로그인 세션이 TLS 위에서 유효)
+
+[WSS ⑰] Werkzeug에 TLS를 직접 적용한 구성은 업그레이드에 실패했다.
+        실제 운영과 같은 TLS 종료 역방향 프록시 구성에서 별도 재검증해 PASS.
+        상세 원문: P10_WSS.txt
+=== P10 HTTPS 실증 결과: HTTPS PASS / WSS PASS(별도 증적) ===
