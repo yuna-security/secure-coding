@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}전체 채팅{% endblock %}
+{% block content %}
+<h2>전체 채팅</h2>
+<p class="muted">로그인한 사용자끼리 실시간으로 대화합니다.</p>
+
+{# data-* 속성으로 설정 전달(인라인 스크립트 금지 — CSP script-src 'self'). #}
+<div id="chat-root"
+     data-scope="global"
+     data-me-id="{{ current_user.id }}">
+  <ul id="chat-log" class="chat-log">
+    {% for m in messages %}
+      {# 히스토리는 Jinja 자동 이스케이프로 안전 렌더링(⑨/⑮). #}
+      <li class="chat-msg{% if m.sender_id == current_user.id %} mine{% endif %}">
+        <span class="chat-user">{{ m.sender.username if m.sender else '알 수 없음' }}</span>
+        <span class="chat-text">{{ m.content }}</span>
+        <span class="chat-time muted">{{ m.created_at.strftime('%H:%M') }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+  <form id="chat-form" class="chat-form" autocomplete="off">
+    <input id="chat-input" type="text" name="content"
+           maxlength="{{ config.CHAT_MESSAGE_MAX }}"
+           placeholder="메시지를 입력하세요" required>
+    <button type="submit">보내기</button>
+  </form>
+  <p id="chat-error" class="err" role="alert"></p>
+</div>
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

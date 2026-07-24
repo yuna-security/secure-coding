@@ -198,11 +198,18 @@ class ChatMessage(db.Model):
 
     __table_args__ = (
         db.CheckConstraint(
+            "length(trim(content)) between 1 and 500",
+            name="ck_chat_content_length",
+        ),
+        db.CheckConstraint(
             "(scope = 'global' AND dm_room_id IS NULL) "
             "OR (scope = 'dm' AND dm_room_id IS NOT NULL)",
             name="ck_chat_scope_room",
         ),
     )
+
+    # 화면 표시용 읽기 전용 관계(스키마 변경 없음).
+    sender = db.relationship("User", foreign_keys=[sender_id], viewonly=True)
 
 
 class Transfer(db.Model):

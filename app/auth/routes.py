@@ -59,9 +59,14 @@ def login():
 def logout():
     form = LogoutForm()
     if form.validate_on_submit():
-        write_audit("user", "logout", actor_id=current_user.id)
+        user_id = current_user.id
+        write_audit("user", "logout", actor_id=user_id)
         db.session.commit()
         logout_user()
+        # 페이지가 닫히지 않은 별도 탭/클라이언트의 기존 소켓도 서버에서 폐기한다.
+        from ..chat.connections import disconnect_user_sockets
+
+        disconnect_user_sockets(user_id)
         flash("로그아웃되었습니다.")
     return redirect(url_for("main.index"))
 
@@ -81,6 +86,9 @@ def change_password():
             return render_template("auth/change_password.html", form=form), 400
         write_audit("user", "password_change", actor_id=user.id)
         db.session.commit()
+        from ..chat.connections import disconnect_user_sockets
+
+        disconnect_user_sockets(user.id)
         # 민감정보 변경 후 기존 세션 상태를 버리고 fresh 세션으로 재발급한다.
         session.clear()
         login_user(user, fresh=True)

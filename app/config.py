@@ -61,6 +61,12 @@ class BaseConfig:
     # 관리자(R7)
     ADMIN_PAGE_SIZE = 30            # 관리자 목록 페이지네이션(사용자/상품/신고/로그)
 
+    # 채팅(R3) — Socket.IO 이벤트는 Flask-Limiter가 아닌 사용자 ID 기반 카운터로 제한(§3)
+    # (메시지 길이 상한 CHAT_MESSAGE_MAX는 위 공통 상수에서 정의)
+    CHAT_RATE_MAX_EVENTS = 5           # ⑯ 사용자별 5개 / 창(윈도우)
+    CHAT_RATE_WINDOW_SECONDS = 5       # ⑯ 5초 슬라이딩 윈도우
+    CHAT_HISTORY_LIMIT = 50            # 진입 시 표시할 최근 메시지 수
+
     # 상품 (R2) / 검색 (R6)
     PRODUCT_TITLE_MAX = 120         # 모델 String(120)과 일치
     PRODUCT_DESC_MAX = 4000         # 모델 String(4000)과 일치

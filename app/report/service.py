@@ -143,6 +143,7 @@ def report_user(reporter: User, user_id: str, reason: str) -> Report:
     report = Report(
         reporter_id=reporter.id, reported_user_id=target.id, reason=reason
     )
+    dormant_applied = False
     try:
         db.session.add(report)
         db.session.flush()  # UNIQUE(reporter, user)·자기신고 CHECK 반영
@@ -161,6 +162,7 @@ def report_user(reporter: User, user_id: str, reason: str) -> Report:
                 synchronize_session="fetch",
             )
             if changed == 1:
+                dormant_applied = True
                 _mark_pending_auto_actioned(user_id=target.id)
                 write_audit(
                     "system",
@@ -169,6 +171,11 @@ def report_user(reporter: User, user_id: str, reason: str) -> Report:
                     detail=f"{count} active pending reports",
                 )
         db.session.commit()
+        if dormant_applied:
+            # 상태 commit 뒤 기존 연결을 종료해 휴면 사용자의 채팅 수신을 막는다.
+            from ..chat.connections import disconnect_user_sockets
+
+            disconnect_user_sockets(target.id)
         return report
     except IntegrityError:
         db.session.rollback()

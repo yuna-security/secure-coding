@@ -74,6 +74,10 @@ def set_user_dormant(admin: User, user_id: str) -> None:
         raise Conflict()
     write_audit("admin", "admin_user_dormant", actor_id=admin.id, target=user_id)
     db.session.commit()
+    # 이미 연결된 채팅 소켓도 즉시 종료해 휴면 뒤 수신을 막는다.
+    from ..chat.connections import disconnect_user_sockets
+
+    disconnect_user_sockets(user_id)
 
 
 @_transactional

@@ -68,4 +68,15 @@ button:hover, input[type="submit"]:hover { background: #1d4ed8; }
 .status-report-auto_actioned { background: #fee2e2; color: #991b1b; }
 .status-report-reviewed { background: #dbeafe; color: #1e40af; }
 .status-report-resolved { background: #dcfce7; color: #166534; }
+/* 채팅 (P5) */
+.chat-log { list-style: none; margin: 0 0 12px; padding: 12px; height: 360px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 8px; background: #fafafa; }
+.chat-msg { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; }
+.chat-msg.mine .chat-user { color: var(--accent); }
+.chat-user { font-weight: 600; flex: 0 0 auto; }
+.chat-text { flex: 1 1 auto; overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-time { flex: 0 0 auto; font-size: 12px; }
+.chat-form { display: flex; gap: 8px; }
+.chat-form input[type="text"] { flex: 1 1 auto; margin: 0; }
+.chat-form button { margin: 0; }
 @media (max-width: 480px) { .container { margin: 16px; padding: 18px; } }

@@ -1,0 +1,2 @@
+# 공식 vendored 빌드의 바이트·SHA-256을 플랫폼과 무관하게 보존한다.
+app/static/js/socket.io.min.js binary
