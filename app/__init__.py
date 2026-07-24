@@ -11,7 +11,7 @@ from flask_login import current_user
 from .config import CONFIG_MAP
 from .extensions import db, migrate, csrf, login_manager, limiter, socketio
 from . import models
-from .security import register_security
+from .security import register_security, set_private_mode
 
 
 def create_app(config_name=None):
@@ -53,12 +53,10 @@ def create_app(config_name=None):
     app.config["UPLOAD_FOLDER"] = os.path.abspath(upload_folder)
     # 테스트는 fixture가 격리된 임시 폴더를 주입하므로 기본 경로를 만들지 않는다.
     if not app.testing:
+        os.makedirs(app.instance_path, exist_ok=True)
+        set_private_mode(app.instance_path, 0o700)
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        if os.name != "nt":
-            try:
-                os.chmod(app.config["UPLOAD_FOLDER"], 0o700)
-            except OSError:
-                pass  # POSIX 권한 변경을 지원하지 않는 파일시스템
+        set_private_mode(app.config["UPLOAD_FOLDER"], 0o700)
 
     # 보안 헤더 + 오류 처리
     register_security(app)
