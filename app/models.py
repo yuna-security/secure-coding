@@ -112,6 +112,10 @@ class Report(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=_now)
 
     __table_args__ = (
+        db.CheckConstraint(
+            "length(trim(reason)) between 1 and 1000",
+            name="ck_report_reason_length",
+        ),
         # 정확히 하나의 대상만 존재
         db.CheckConstraint(
             "(reported_user_id IS NOT NULL) <> (reported_product_id IS NOT NULL)",

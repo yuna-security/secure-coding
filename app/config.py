@@ -53,7 +53,10 @@ class BaseConfig:
     BIO_MAX = 500
     REPORT_REASON_MAX = 1000
     CHAT_MESSAGE_MAX = 500
-    REPORT_BLOCK_THRESHOLD = 3      # 신고 임계치
+    REPORT_BLOCK_THRESHOLD = 3          # 상품 자동 차단 임계치 (AC4.3)
+    REPORT_USER_DORMANT_THRESHOLD = 3   # 사용자 자동 휴면 임계치 (AC4.4)
+    REPORT_USER_RATE_LIMIT = "30 per hour"  # 상품·사용자 신고 합산(인증 사용자)
+    REPORT_IP_RATE_LIMIT = "100 per hour"   # 다계정·자동화 신고 보조 제한
 
     # 상품 (R2) / 검색 (R6)
     PRODUCT_TITLE_MAX = 120         # 모델 String(120)과 일치

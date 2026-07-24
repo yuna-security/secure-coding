@@ -21,5 +21,19 @@
     </form>
   </div>
 {% endif %}
+
+{% if can_report %}
+  <details class="report-box">
+    <summary>이 상품 신고</summary>
+    <form method="post" action="{{ url_for('product.report', product_id=product.id) }}" novalidate>
+      {{ report_form.csrf_token }}
+      <label>{{ report_form.reason.label }}
+        {{ report_form.reason(rows=3, maxlength=config.REPORT_REASON_MAX, placeholder="신고 사유를 입력하세요") }}
+      </label>
+      {% for e in report_form.reason.errors %}<p class="err">{{ e }}</p>{% endfor %}
+      {{ report_form.submit() }}
+    </form>
+  </details>
+{% endif %}
 <p class="muted"><a href="{{ url_for('product.list_') }}">← 목록으로</a></p>
 {% endblock %}

@@ -42,4 +42,7 @@ button:hover, input[type="submit"]:hover { background: #1d4ed8; }
 .status-blocked { background: #fee2e2; color: #991b1b; }
 .status-deleted { background: #e5e7eb; color: #6b7280; }
 .pagination { display: flex; gap: 14px; align-items: center; margin-top: 18px; }
+.report-box { margin-top: 18px; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+.report-box summary { cursor: pointer; color: var(--err); font-weight: 600; }
+.report-box textarea { width: 100%; }
 @media (max-width: 480px) { .container { margin: 16px; padding: 18px; } }

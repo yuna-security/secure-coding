@@ -11,6 +11,9 @@ from ..models import write_audit
 from ..auth.service import ValidationError
 from . import service
 from .forms import ProfileForm
+from ..report import reporter_rate_limit, report_ip_rate_limit
+from ..report.forms import ReportForm
+from ..report import service as report_service
 
 user_bp = Blueprint("user", __name__)
 
@@ -34,10 +37,45 @@ def me():
     return render_template("user/me.html", form=form, user=user), status
 
 
-@user_bp.route("/users/<user_id>")
-@login_required
-def profile(user_id):
+def _render_profile(user_id, report_form=None, status=200):
     user = service.get_user_or_404(user_id)
     profile = service.public_profile(user)
     is_me = user.id == current_user.id
-    return render_template("user/profile.html", profile=profile, is_me=is_me)
+    can_report = (
+        (not is_me)
+        and user.status == "active"
+        and user.role == "user"
+    )
+    return render_template(
+        "user/profile.html",
+        profile=profile,
+        is_me=is_me,
+        target_id=user.id,
+        can_report=can_report,
+        report_form=report_form or ReportForm(),
+    ), status
+
+
+@user_bp.route("/users/<user_id>")
+@login_required
+def profile(user_id):
+    return _render_profile(user_id)
+
+
+@user_bp.route("/users/<user_id>/report", methods=["POST"])
+@login_required
+@reporter_rate_limit
+@report_ip_rate_limit
+def report(user_id):
+    form = ReportForm()
+    if form.validate_on_submit():
+        try:
+            report_service.report_user(
+                current_user._get_current_object(), user_id, form.reason.data
+            )
+        except ValidationError as exc:
+            flash(str(exc))
+            return _render_profile(user_id, report_form=form, status=400)
+        flash("신고가 접수되었습니다.")
+        return redirect(url_for("user.profile", user_id=user_id))
+    return _render_profile(user_id, report_form=form, status=400)

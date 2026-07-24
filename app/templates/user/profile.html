@@ -15,4 +15,18 @@
 {% if is_me %}
   <p class="muted"><a href="{{ url_for('user.me') }}">프로필 편집</a></p>
 {% endif %}
+
+{% if can_report %}
+  <details class="report-box">
+    <summary>이 사용자 신고</summary>
+    <form method="post" action="{{ url_for('user.report', user_id=target_id) }}" novalidate>
+      {{ report_form.csrf_token }}
+      <label>{{ report_form.reason.label }}
+        {{ report_form.reason(rows=3, maxlength=config.REPORT_REASON_MAX, placeholder="신고 사유를 입력하세요") }}
+      </label>
+      {% for e in report_form.reason.errors %}<p class="err">{{ e }}</p>{% endfor %}
+      {{ report_form.submit() }}
+    </form>
+  </details>
+{% endif %}
 {% endblock %}

@@ -14,8 +14,27 @@ from ..models import User
 from ..auth.service import ValidationError
 from . import service
 from .forms import ProductForm, DeleteForm
+from ..report import reporter_rate_limit, report_ip_rate_limit
+from ..report.forms import ReportForm
+from ..report import service as report_service
 
 product_bp = Blueprint("product", __name__)
+
+
+def _render_detail(product_id, report_form=None, status=200):
+    product = service.get_product_detail_or_404(product_id, current_user)
+    seller = db.session.get(User, product.seller_id)
+    is_owner = current_user.is_authenticated and current_user.id == product.seller_id
+    can_report = current_user.is_authenticated and not is_owner
+    return render_template(
+        "product/detail.html",
+        product=product,
+        seller=seller,
+        is_owner=is_owner,
+        can_report=can_report,
+        delete_form=DeleteForm(),
+        report_form=report_form or ReportForm(),
+    ), status
 
 
 # ---------- 공개 조회 ----------
@@ -54,16 +73,26 @@ def search():
 
 @product_bp.route("/products/<product_id>")
 def detail(product_id):
-    product = service.get_product_detail_or_404(product_id, current_user)
-    seller = db.session.get(User, product.seller_id)
-    is_owner = current_user.is_authenticated and current_user.id == product.seller_id
-    return render_template(
-        "product/detail.html",
-        product=product,
-        seller=seller,
-        is_owner=is_owner,
-        delete_form=DeleteForm(),
-    )
+    return _render_detail(product_id)
+
+
+@product_bp.route("/products/<product_id>/report", methods=["POST"])
+@login_required
+@reporter_rate_limit
+@report_ip_rate_limit
+def report(product_id):
+    form = ReportForm()
+    if form.validate_on_submit():
+        try:
+            report_service.report_product(
+                current_user._get_current_object(), product_id, form.reason.data
+            )
+        except ValidationError as exc:
+            flash(str(exc))
+            return _render_detail(product_id, report_form=form, status=400)
+        flash("신고가 접수되었습니다.")
+        return redirect(url_for("product.list_"))
+    return _render_detail(product_id, report_form=form, status=400)
 
 
 @product_bp.route("/uploads/<filename>")
