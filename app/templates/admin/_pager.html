@@ -1,0 +1,12 @@
+{# 공통 페이지네이션. 필요 시 pager_extra 로 추가 쿼리스트링(예: &status=pending) 전달 #}
+{% if pagination.pages and pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="?page={{ pagination.prev_num }}{{ pager_extra|default('') }}">← 이전</a>
+  {% endif %}
+  <span class="muted">{{ pagination.page }} / {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="?page={{ pagination.next_num }}{{ pager_extra|default('') }}">다음 →</a>
+  {% endif %}
+</div>
+{% endif %}

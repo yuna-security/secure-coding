@@ -1,0 +1,9 @@
+{# 관리자 하위 내비게이션 (모든 admin 화면 공통) #}
+<nav class="admin-nav">
+  <a href="{{ url_for('admin.dashboard') }}">대시보드</a>
+  <a href="{{ url_for('admin.users') }}">사용자</a>
+  <a href="{{ url_for('admin.products') }}">상품</a>
+  <a href="{{ url_for('admin.reports') }}">신고</a>
+  <a href="{{ url_for('admin.transactions') }}">거래</a>
+  <a href="{{ url_for('admin.logs') }}">감사 로그</a>
+</nav>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}관리자 · 감사 로그{% endblock %}
+{% block content %}
+<h2>감사 로그</h2>
+{% include "admin/_nav.html" %}
+{# 부인 방지 기록(SR-05). 시스템/사용자/관리자 행위를 시간순으로 열람. #}
+<div class="table-scroll">
+  <table class="admin-table">
+    <thead>
+      <tr><th>시각</th><th>행위자</th><th>동작</th><th>대상</th><th>상세</th></tr>
+    </thead>
+    <tbody>
+      {% for log in pagination.items %}
+        <tr>
+          <td class="muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td>
+            {{ log.actor_type }}{% if log.actor %} · {{ log.actor.username }}{% endif %}
+          </td>
+          <td>{{ log.action }}</td>
+          <td class="muted">{{ log.target or '—' }}</td>
+          <td class="muted">{{ log.detail or '—' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">기록이 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "admin/_pager.html" %}
+{% endblock %}

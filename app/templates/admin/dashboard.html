@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}관리자 대시보드{% endblock %}
+{% block content %}
+<h2>관리자 대시보드</h2>
+{% include "admin/_nav.html" %}
+
+<div class="admin-cards">
+  <section class="admin-card">
+    <h3>사용자</h3>
+    <ul>
+      <li>활성 <b>{{ stats.users.get('active', 0) }}</b></li>
+      <li>휴면 <b>{{ stats.users.get('dormant', 0) }}</b></li>
+    </ul>
+  </section>
+  <section class="admin-card">
+    <h3>상품</h3>
+    <ul>
+      <li>활성 <b>{{ stats.products.get('active', 0) }}</b></li>
+      <li>차단 <b>{{ stats.products.get('blocked', 0) }}</b></li>
+      <li>삭제 <b>{{ stats.products.get('deleted', 0) }}</b></li>
+    </ul>
+  </section>
+  <section class="admin-card">
+    <h3>신고</h3>
+    <ul>
+      <li>접수 <b>{{ stats.reports.get('pending', 0) }}</b></li>
+      <li>자동조치 <b>{{ stats.reports.get('auto_actioned', 0) }}</b></li>
+      <li>검토중 <b>{{ stats.reports.get('reviewed', 0) }}</b></li>
+      <li>완료 <b>{{ stats.reports.get('resolved', 0) }}</b></li>
+    </ul>
+  </section>
+  <section class="admin-card">
+    <h3>감사 로그</h3>
+    <ul>
+      <li>총 기록 <b>{{ stats.audit_count }}</b></li>
+    </ul>
+  </section>
+</div>
+{% endblock %}

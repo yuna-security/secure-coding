@@ -88,6 +88,11 @@ def register_security(app):
     def _too_large(e):
         return _render_error(413, "업로드 용량이 너무 큽니다.")
 
+    @app.errorhandler(409)
+    def _conflict(e):
+        # 동시 상태 변경 등 경합으로 조건부 UPDATE가 적용되지 못한 경우.
+        return _render_error(409, "이미 처리되었거나 상태가 변경되어 요청을 완료할 수 없습니다.")
+
     @app.errorhandler(429)
     def _rate_limited(e):
         return _render_error(429, "요청이 너무 많습니다. 잠시 후 다시 시도하세요.")

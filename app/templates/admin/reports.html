@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}관리자 · 신고{% endblock %}
+{% block content %}
+<h2>신고 검토</h2>
+{% include "admin/_nav.html" %}
+
+<nav class="admin-filter">
+  <a href="{{ url_for('admin.reports') }}"{% if not status %} class="active"{% endif %}>전체</a>
+  {% for s in ['pending', 'auto_actioned', 'reviewed', 'resolved'] %}
+    <a href="{{ url_for('admin.reports', status=s) }}"{% if status == s %} class="active"{% endif %}>{{ s }}</a>
+  {% endfor %}
+</nav>
+
+<div class="table-scroll">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>대상</th><th>신고자</th><th>사유</th><th>상태</th>
+        <th>결정</th><th>검토자</th><th>접수일</th><th>조치</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in pagination.items %}
+        <tr>
+          <td>
+            {% if r.reported_product_id %}
+              상품:
+              <a href="{{ url_for('product.detail', product_id=r.reported_product_id) }}">
+                {{ r.reported_product.title if r.reported_product else r.reported_product_id }}
+              </a>
+            {% else %}
+              사용자: {{ r.reported_user.username if r.reported_user else r.reported_user_id }}
+            {% endif %}
+          </td>
+          <td>{{ r.reporter.username if r.reporter else r.reporter_id }}</td>
+          <td class="reason-cell">{{ r.reason }}</td>
+          <td><span class="status status-report-{{ r.status }}">{{ r.status }}</span></td>
+          <td>{{ r.resolution or '—' }}</td>
+          <td>{{ r.reviewer.username if r.reviewer else '—' }}</td>
+          <td class="muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="row-actions">
+            {% if r.status == 'pending' %}
+              <form class="inline-form" method="post"
+                    action="{{ url_for('admin.report_review', report_id=r.id) }}">
+                {{ action_form.csrf_token }}<button type="submit">검토</button>
+              </form>
+            {% endif %}
+            {% if r.status in ('reviewed', 'auto_actioned') %}
+              <form class="inline-form" method="post"
+                    action="{{ url_for('admin.report_resolve', report_id=r.id) }}">
+                {{ resolve_form.csrf_token }}
+                <select name="resolution">
+                  <option value="upheld">유지(upheld)</option>
+                  {% if r.status == 'auto_actioned' %}
+                    <option value="reversed">복구(reversed)</option>
+                  {% else %}
+                    <option value="dismissed">기각(dismissed)</option>
+                  {% endif %}
+                </select>
+                <button type="submit">결정</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="muted">신고가 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% set pager_extra = ('&status=' ~ status) if status else '' %}
+{% include "admin/_pager.html" %}
+{% endblock %}

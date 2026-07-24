@@ -289,9 +289,15 @@ def list_products(page: int, q: str = None, sort: str = "newest"):
 
 
 def get_product_detail_or_404(product_id: str, viewer) -> Product:
-    """공개 상품 또는 차단 상태인 본인 상품의 상세 조회를 허용한다."""
+    """공개 상품, 차단 상태인 본인 상품, 관리자 감사 조회를 허용한다."""
     product = db.session.get(Product, product_id)
-    if product is None or product.status == "deleted":
+    if product is None:
+        raise NotFound()
+    is_admin = (
+        getattr(viewer, "is_authenticated", False)
+        and getattr(viewer, "is_admin", False)
+    )
+    if product.status == "deleted" and not is_admin:
         raise NotFound()
     seller = db.session.get(User, product.seller_id)
     publicly_visible = (
@@ -303,11 +309,7 @@ def get_product_detail_or_404(product_id: str, viewer) -> Product:
         getattr(viewer, "is_authenticated", False)
         and viewer.id == product.seller_id
     )
-    admin_visible = (
-        getattr(viewer, "is_authenticated", False)
-        and getattr(viewer, "is_admin", False)
-    )
-    if not (publicly_visible or owner_visible or admin_visible):
+    if not (publicly_visible or owner_visible or is_admin):
         raise NotFound()
     return product
 

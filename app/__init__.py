@@ -68,11 +68,13 @@ def create_app(config_name=None):
     from .auth.routes import auth_bp
     from .user.routes import user_bp
     from .product.routes import product_bp
+    from .admin.routes import admin_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(product_bp)
+    app.register_blueprint(admin_bp)
 
     # CLI
     from .cli import register_cli

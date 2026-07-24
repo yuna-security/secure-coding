@@ -156,6 +156,20 @@ class Report(db.Model):
         ),
     )
 
+    # 관리자 화면 표시용 읽기 전용 관계(스키마 변경 없음 — DDL 미생성).
+    reporter = db.relationship(
+        "User", foreign_keys=[reporter_id], viewonly=True
+    )
+    reported_user = db.relationship(
+        "User", foreign_keys=[reported_user_id], viewonly=True
+    )
+    reported_product = db.relationship(
+        "Product", foreign_keys=[reported_product_id], viewonly=True
+    )
+    reviewer = db.relationship(
+        "User", foreign_keys=[reviewed_by], viewonly=True
+    )
+
 
 class DMRoom(db.Model):
     __tablename__ = "dm_room"
@@ -224,6 +238,10 @@ class Transfer(db.Model):
         ),
     )
 
+    # 관리자 거래 로그 표시용 읽기 전용 관계(스키마 변경 없음).
+    sender = db.relationship("User", foreign_keys=[sender_id], viewonly=True)
+    receiver = db.relationship("User", foreign_keys=[receiver_id], viewonly=True)
+
 
 class AuditLog(db.Model):
     __tablename__ = "audit_log"
@@ -243,6 +261,9 @@ class AuditLog(db.Model):
             name="ck_audit_actor",
         ),
     )
+
+    # 관리자 감사 로그 표시용 읽기 전용 관계(스키마 변경 없음).
+    actor = db.relationship("User", foreign_keys=[actor_id], viewonly=True)
 
 
 def write_audit(actor_type, action, actor_id=None, target="", detail=""):

@@ -25,7 +25,13 @@ def _render_detail(product_id, report_form=None, status=200):
     product = service.get_product_detail_or_404(product_id, current_user)
     seller = db.session.get(User, product.seller_id)
     is_owner = current_user.is_authenticated and current_user.id == product.seller_id
-    can_report = current_user.is_authenticated and not is_owner
+    can_report = (
+        current_user.is_authenticated
+        and not is_owner
+        and product.status == "active"
+        and seller is not None
+        and seller.status == "active"
+    )
     return render_template(
         "product/detail.html",
         product=product,

@@ -58,6 +58,9 @@ class BaseConfig:
     REPORT_USER_RATE_LIMIT = "30 per hour"  # 상품·사용자 신고 합산(인증 사용자)
     REPORT_IP_RATE_LIMIT = "100 per hour"   # 다계정·자동화 신고 보조 제한
 
+    # 관리자(R7)
+    ADMIN_PAGE_SIZE = 30            # 관리자 목록 페이지네이션(사용자/상품/신고/로그)
+
     # 상품 (R2) / 검색 (R6)
     PRODUCT_TITLE_MAX = 120         # 모델 String(120)과 일치
     PRODUCT_DESC_MAX = 4000         # 모델 String(4000)과 일치

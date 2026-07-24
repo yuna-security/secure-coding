@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}관리자 · 사용자{% endblock %}
+{% block content %}
+<h2>사용자 관리</h2>
+{% include "admin/_nav.html" %}
+{# 민감정보(비밀번호 해시·잔액)는 노출하지 않는다 (AC7.5, §7). #}
+<div class="table-scroll">
+  <table class="admin-table">
+    <thead>
+      <tr><th>사용자명</th><th>역할</th><th>상태</th><th>가입일</th><th>조치</th></tr>
+    </thead>
+    <tbody>
+      {% for u in pagination.items %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td>{{ u.role }}</td>
+          <td><span class="status status-{{ u.status }}">{{ u.status }}</span></td>
+          <td class="muted">{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            {% if u.role == 'user' %}
+              {% if u.status == 'active' %}
+                <form class="inline-form" method="post"
+                      action="{{ url_for('admin.user_dormant', user_id=u.id) }}">
+                  {{ action_form.csrf_token }}
+                  <button type="submit">휴면</button>
+                </form>
+              {% elif u.status == 'dormant' %}
+                <form class="inline-form" method="post"
+                      action="{{ url_for('admin.user_restore', user_id=u.id) }}">
+                  {{ action_form.csrf_token }}
+                  <button type="submit">복구</button>
+                </form>
+              {% endif %}
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">사용자가 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "admin/_pager.html" %}
+{% endblock %}
